@@ -1,0 +1,26 @@
+{
+  "name": "renfe-cli",
+  "version": "0.1.0",
+  "description": "Search Renfe trains in Spain and book them by Bizum with the renfe CLI.",
+  "author": {
+    "name": "Jose Mejias",
+    "url": "https://github.com/mejiasd3v"
+  },
+  "homepage": "https://github.com/mejiasd3v/renfe-cli",
+  "repository": "https://github.com/mejiasd3v/renfe-cli",
+  "license": "MIT",
+  "keywords": ["renfe", "trains", "spain", "booking", "bizum"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Renfe",
+    "shortDescription": "Search and book Renfe trains in Spain",
+    "longDescription": "Find Renfe trains, fares and the cheapest days, and book them with the renfe CLI. Purchases are paid by Bizum and need the buyer's approval in their bank app.",
+    "developerName": "Jose Mejias",
+    "category": "Travel",
+    "websiteURL": "https://github.com/mejiasd3v/renfe-cli",
+    "defaultPrompt": [
+      "Find trains from Madrid to Barcelona next Friday",
+      "What is the cheapest day to go to Sevilla next week?"
+    ]
+  }
+}

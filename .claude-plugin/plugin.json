@@ -1,0 +1,13 @@
+{
+  "name": "renfe-cli",
+  "version": "0.1.0",
+  "description": "Search Renfe trains in Spain and book them by Bizum with the renfe CLI.",
+  "author": {
+    "name": "Jose Mejias",
+    "url": "https://github.com/mejiasd3v"
+  },
+  "homepage": "https://github.com/mejiasd3v/renfe-cli",
+  "repository": "https://github.com/mejiasd3v/renfe-cli",
+  "license": "MIT",
+  "keywords": ["renfe", "trains", "spain", "booking", "bizum"]
+}

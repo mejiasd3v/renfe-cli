@@ -1,0 +1,15 @@
+{
+  "name": "renfe-cli",
+  "description": "Renfe train search and booking skill for Claude Code",
+  "owner": {
+    "name": "Jose Mejias",
+    "url": "https://github.com/mejiasd3v"
+  },
+  "plugins": [
+    {
+      "name": "renfe-cli",
+      "source": "./",
+      "description": "Search Renfe trains in Spain and book them by Bizum with the renfe CLI."
+    }
+  ]
+}

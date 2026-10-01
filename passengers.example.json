@@ -1,0 +1,16 @@
+{
+  "bizum_phone": "+34600000000",
+  "passengers": [
+    {
+      "id": "me",
+      "type": "adult",
+      "name": "Nombre",
+      "surname1": "Primer apellido",
+      "surname2": "Segundo apellido",
+      "document_type": "DNI",
+      "document": "12345678Z",
+      "email": "you@example.com",
+      "phone": "+34600000000"
+    }
+  ]
+}
