@@ -12,10 +12,14 @@ jobs:
         os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-go@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
       - run: go vet ./...
       - run: go test ./...
       - run: go run honnef.co/go/tools/cmd/staticcheck@latest ./...
+      - run: shellcheck skills/renfe/scripts/renfe scripts/dist.sh
+        if: runner.os == 'Linux'
+      - run: ./scripts/dist.sh "$(sed -n 's/^VERSION="\(.*\)"$/\1/p' skills/renfe/scripts/renfe)"
+        if: runner.os == 'Linux'

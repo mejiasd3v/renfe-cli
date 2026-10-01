@@ -15,35 +15,69 @@ This project is not affiliated with or endorsed by Renfe. It drives renfe.com's 
 
 ## Install
 
+Prebuilt binaries for macOS and Linux (Intel and ARM) are on the [releases page](https://github.com/mejiasd3v/renfe-cli/releases). For example, on an Apple silicon Mac:
+
 ```sh
-go install github.com/mejiasd3v/renfe-cli/cmd/renfe@latest
+curl -fsSLO https://github.com/mejiasd3v/renfe-cli/releases/download/v0.1.0/renfe_0.1.0_darwin_arm64.tar.gz
+tar -xzf renfe_0.1.0_darwin_arm64.tar.gz renfe && mv renfe ~/.local/bin/
 ```
 
-Requires Go 1.27 or later, on macOS or Linux. Searching needs only network access. Booking also needs a Chromium-based browser: Helium, Google Chrome or Chromium, or any other set in `RENFE_BROWSER`.
+Each release has a `checksums.txt` and GitHub build-provenance attestations (`gh attestation verify renfe_0.1.0_darwin_arm64.tar.gz -R mejiasd3v/renfe-cli`). The binaries are not notarized by Apple: one downloaded with a browser needs `xattr -d com.apple.quarantine renfe` before macOS runs it.
 
-To build from source: `git clone https://github.com/mejiasd3v/renfe-cli && cd renfe-cli && make build`.
+With Go 1.27 or later you can instead run `go install github.com/mejiasd3v/renfe-cli/cmd/renfe@latest`.
+
+Searching needs only network access. Booking also needs a Chromium-based browser: Helium, Google Chrome or Chromium, or any other set in `RENFE_BROWSER`.
 
 ## Agent skill
 
-The skill in [`skills/renfe`](skills/renfe/SKILL.md) teaches an agent the search, book and pay workflow and its safety rules. The repository is a plugin marketplace for both agents.
+The skill in [`skills/renfe`](skills/renfe/SKILL.md) teaches an agent the search, book and pay workflow and its safety rules. It works with Claude Code, Codex, OpenClaw and Hermes Agent. The agent runs the CLI through the skill's `scripts/renfe` launcher, which picks a binary in this order:
 
-**Claude Code**
+1. The binary bundled in the skill's `bin/`.
+2. A `renfe` on PATH of the same version.
+3. The matching release binary, downloaded once into `~/.cache/renfe-cli` and checked against the release's SHA-256 checksums.
+
+So any install method below works without Go.
+
+**One command for every agent on your machine:**
 
 ```sh
-claude plugin marketplace add mejiasd3v/renfe-cli
-claude plugin install renfe-cli@renfe-cli
+renfe skill install                       # the agents found in your home folder
+renfe skill install --agent claude,hermes # or choose: claude, codex, openclaw, hermes, all
 ```
 
-**Codex**
+This writes the skill, with a copy of the running `renfe` binary, into each agent's skills folder:
+
+| Agent | Skills folder |
+| --- | --- |
+| Claude Code | `~/.claude/skills/renfe` (`CLAUDE_CONFIG_DIR` respected) |
+| Codex | `~/.agents/skills/renfe` |
+| OpenClaw | `~/.openclaw/skills/renfe` (`OPENCLAW_STATE_DIR` respected); with the default state folder OpenClaw also loads the Codex copy in `~/.agents/skills`, so no second copy is made |
+| Hermes Agent | `~/.hermes/skills/renfe` (`HERMES_HOME` respected); skipped when Hermes already loads `~/.agents/skills` through `skills.external_dirs`, because two copies make Hermes reject the skill name as ambiguous |
+
+The command never writes through a symlink or replaces a folder that is not this skill.
+
+**Native installers:**
 
 ```sh
-codex plugin marketplace add mejiasd3v/renfe-cli
-codex plugin add renfe-cli@renfe-cli
+# Claude Code
+claude plugin marketplace add mejiasd3v/renfe-cli && claude plugin install renfe-cli@renfe-cli
+
+# Codex
+codex plugin marketplace add mejiasd3v/renfe-cli && codex plugin add renfe-cli@renfe-cli
+
+# Hermes Agent
+hermes skills install mejiasd3v/renfe-cli/skills/renfe
 ```
 
-Or copy `skills/renfe` into `~/.claude/skills/` (Claude Code) or `~/.agents/skills/` (Codex and other Agent Skills clients). Codex's `$skill-installer` also accepts `https://github.com/mejiasd3v/renfe-cli/tree/main/skills/renfe`.
+Every release also has skill bundles with the binary inside, `renfe-skill_<version>_<os>_<arch>.zip`. Unzip one into any agent's skills folder. OpenClaw's own `skills install` needs `SKILL.md` at the repository root, so for OpenClaw use `renfe skill install`, a skill bundle, or the shared `~/.agents/skills` folder.
 
-The agent still needs the `renfe` binary on PATH and, for bookings, a passengers file.
+The skill's frontmatter carries metadata for each agent:
+
+- **OpenClaw:** emoji, supported OS, and a `go install` option in its skills UI.
+- **Hermes:** tags.
+- **Codex:** display text in `agents/openai.yaml`.
+
+Bookings still need a passengers file (below).
 
 ## Find trains
 
@@ -145,9 +179,21 @@ The station list comes from renfe.com's `estacionesEstaticas.js` and is cached f
 
 ## Tested
 
-On 2026-10-01: station lookup; one-way, round-trip and connecting searches; `book` without passengers for one-way and round trips; and one live end-to-end purchase of a regional ticket. That purchase ran `book --passenger`, then `pay`, and the Bizum request was approved in the bank app. It returned `confirmed` with Renfe's locator, and `renfe ticket` saved the PDF.
+On 2026-10-01:
 
-Not exercised yet: several passengers, children or infants on the passenger form; an AVE or AVLO purchase; a declined or expired Bizum request; trains that require signing in; and the automatic PDF download inside a live `pay`.
+- **CLI:** station lookup; one-way, round-trip and connecting searches; `book` without passengers for one-way and round trips.
+- **Live purchase:** one end-to-end purchase of a regional ticket. It ran `book --passenger`, then `pay`, and the Bizum request was approved in the bank app. It returned `confirmed` with Renfe's locator, and `renfe ticket` saved the PDF.
+- **Skill in Claude Code and Codex:** loaded from their plugin marketplaces, installed from GitHub.
+- **Skill in OpenClaw:** OpenClaw 2026.9.4 lists it as eligible and visible to the model.
+- **Skill in Hermes:** its frontmatter parses with Hermes Agent's own parser. The Hermes install command was not run.
+
+Not exercised yet:
+
+- Several passengers, children or infants on the passenger form.
+- An AVE or AVLO purchase.
+- A declined or expired Bizum request.
+- Trains that require signing in.
+- The automatic PDF download inside a live `pay`.
 
 ## Limits
 
@@ -162,7 +208,10 @@ Not exercised yet: several passengers, children or infants on the passenger form
 make test     # unit tests, no network
 make check    # tests, go vet and staticcheck
 make build    # ./renfe
+make dist     # release archives and skill bundles into dist/
 ```
+
+To release, set the new version in `skills/renfe/scripts/renfe` (`VERSION`), `skills/renfe/SKILL.md` (`metadata.version` and the `go install` module) and both `plugin.json` files, then push a `vX.Y.Z` tag. `scripts/dist.sh` refuses to build if any of them disagree, and the release workflow publishes the archives, checksums and attestations.
 
 The code lives in `cmd/renfe`: `session.go` and `dwr.go` for the HTTP/DWR protocol, `trains.go` for parsing, `choose.go` for train and fare selection, `browser.go` and `checkout.go` for the browser-driven purchase, `ticket.go` for PDFs. Changes to the purchase flow should be verified against renfe.com, since unit tests cannot cover the live pages.
 

@@ -10,12 +10,14 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
+	"runtime/debug"
 	"strings"
 	"text/tabwriter"
 	"time"
 )
 
-const usage = `Usage: renfe <stations|search|book|pay|ticket> [flags]
+const usage = `Usage: renfe <stations|search|book|pay|ticket|skill|version> [flags]
 
   stations QUERY                      find station names and codes
   search --from Q --to Q --date YYYY-MM-DD [--return YYYY-MM-DD]
@@ -24,6 +26,8 @@ const usage = `Usage: renfe <stations|search|book|pay|ticket> [flags]
          [--passenger ID ... [--pay bizum --max-total EUR]] [--dry-run]
   pay    --max-total EUR              pay the purchase "book --passenger" prepared
   ticket [LOCATOR]                    download the ticket PDF of a purchase made here
+  skill install [--agent ...]         install the agent skill, with this binary
+  version                             print the version
 
 Stations accept names ("madrid", "barcelona sants", "Cádiz") or codes ("60000").
 Passengers: --passenger IDs from ~/.config/renfe/passengers.json, or for search
@@ -50,13 +54,34 @@ func run(args []string, out, stderr io.Writer) error {
 		fmt.Fprintln(out, usage)
 		return nil
 	}
+	if args[0] == "version" || args[0] == "--version" {
+		fmt.Fprintln(out, "renfe", buildVersion())
+		return nil
+	}
 	commands := map[string]func([]string, io.Writer, io.Writer) error{
-		"stations": runStations, "search": runSearch, "book": runBook, "pay": runPay, "ticket": runTicket,
+		"stations": runStations, "search": runSearch, "book": runBook, "pay": runPay, "ticket": runTicket, "skill": runSkill,
 	}
 	if command, ok := commands[args[0]]; ok {
 		return command(args[1:], out, stderr)
 	}
 	return fmt.Errorf("unknown command %q; run renfe --help", args[0])
+}
+
+// version is set at release build time with -ldflags "-X main.version=v1.2.3".
+var version = ""
+
+var releaseVersion = regexp.MustCompile(`^v[0-9]+\.[0-9]+\.[0-9]+$`)
+
+// buildVersion reports the release version, or the module version for
+// "go install ...@vX.Y.Z" builds, or "dev" for anything else (local and pseudo-versions).
+func buildVersion() string {
+	if version != "" {
+		return version
+	}
+	if info, ok := debug.ReadBuildInfo(); ok && releaseVersion.MatchString(info.Main.Version) {
+		return info.Main.Version
+	}
+	return "dev"
 }
 
 // configDir is ~/.config/renfe, which holds the station cache, passengers,

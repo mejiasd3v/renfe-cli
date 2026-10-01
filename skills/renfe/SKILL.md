@@ -1,17 +1,36 @@
 ---
 name: renfe
 description: Search Renfe trains in Spain (AVE, AVLO, regional and other trains sold on renfe.com) and book them for the user with the renfe CLI, paying by Bizum with the user's approval in their bank app. Use for Spanish train timetables, fares, cheapest-day questions, and buying or downloading Renfe tickets.
+license: MIT
+metadata:
+  version: "0.1.0"
+  homepage: https://github.com/mejiasd3v/renfe-cli
+  hermes:
+    tags: [travel, trains, spain, renfe, bizum]
+  openclaw:
+    emoji: "🚆"
+    homepage: https://github.com/mejiasd3v/renfe-cli
+    os: [darwin, linux]
+    install:
+      - id: go
+        kind: go
+        module: github.com/mejiasd3v/renfe-cli/cmd/renfe@v0.1.0
+        bins: [renfe]
+        label: Install renfe with go install
 ---
 
 # Renfe trains
 
-Use the `renfe` CLI. JSON goes to stdout and progress to stderr. Errors exit 1 with Renfe's message.
+Run the CLI as `sh <skill folder>/scripts/renfe <arguments>`, where `<skill folder>` is the folder containing this SKILL.md and the arguments are those shown below after `renfe`. The launcher runs the binary bundled in `bin/`, or a matching `renfe` on PATH, or downloads this skill's release binary once from GitHub Releases and checks its SHA-256 before running it. JSON goes to stdout and progress to stderr. Errors exit 1 with Renfe's message.
 
 ## Setup
 
-- If `renfe` is not on PATH, install it with `go install github.com/mejiasd3v/renfe-cli/cmd/renfe@latest` (Go 1.27+), or ask the user to.
-- The CLI needs network access to renfe.com. Booking also starts a Chromium-based browser (Helium, Chrome or Chromium; `RENFE_BROWSER` overrides it) and writes to `~/.config/renfe/`. In a sandboxed agent, request those permissions for `book`, `pay` and `ticket`.
-- Booking reads travellers from `~/.config/renfe/passengers.json`. If it is missing, ask the user for each traveller's details and write the file from `passengers.example.json` in the repository, with permissions 600. Never invent personal details.
+- Supported on macOS and Linux. The CLI needs network access to renfe.com. Booking also starts a Chromium-based browser (Helium, Chrome or Chromium; `RENFE_BROWSER` overrides it) and writes to `~/.config/renfe/`. In a sandboxed agent, request those permissions for `book`, `pay` and `ticket`.
+- Booking reads travellers from `~/.config/renfe/passengers.json`. If it is missing, ask the user for each traveller's details and write the file in this format, with permissions 600. Never invent personal details.
+  ```json
+  {"bizum_phone": "+34600000000", "passengers": [{"id": "me", "type": "adult", "name": "...", "surname1": "...", "surname2": "...", "document_type": "DNI", "document": "...", "email": "...", "phone": "+34600000000"}]}
+  ```
+  `type` is `adult`, `child` (4 to 13) or `infant`; `document_type` is `DNI`, `NIE` or `passport`; the buyer (first passenger) needs `email` and `phone`.
 
 ## Find trains
 
