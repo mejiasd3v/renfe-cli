@@ -65,11 +65,14 @@ claude plugin marketplace add mejiasd3v/renfe-cli && claude plugin install renfe
 # Codex
 codex plugin marketplace add mejiasd3v/renfe-cli && codex plugin add renfe-cli@renfe-cli
 
+# OpenClaw (from ClawHub)
+openclaw skills install @mejiasd3v/renfe
+
 # Hermes Agent
 hermes skills install mejiasd3v/renfe-cli/skills/renfe
 ```
 
-Every release also has skill bundles with the binary inside, `renfe-skill_<version>_<os>_<arch>.zip`. Unzip one into any agent's skills folder. OpenClaw's own `skills install` needs `SKILL.md` at the repository root, so for OpenClaw use `renfe skill install`, a skill bundle, or the shared `~/.agents/skills` folder.
+Every release also has skill bundles with the binary inside, `renfe-skill_<version>_<os>_<arch>.zip`. Unzip one into any agent's skills folder. For OpenClaw, install from ClawHub, run `renfe skill install`, or use the shared `~/.agents/skills` folder; OpenClaw's `git:` installs need `SKILL.md` at the repository root, which this repository does not have.
 
 The skill's frontmatter carries metadata for each agent:
 
@@ -211,7 +214,12 @@ make build    # ./renfe
 make dist     # release archives and skill bundles into dist/
 ```
 
-To release, set the new version in `skills/renfe/scripts/renfe` (`VERSION`), `skills/renfe/SKILL.md` (`metadata.version` and the `go install` module) and both `plugin.json` files, then push a `vX.Y.Z` tag. `scripts/dist.sh` refuses to build if any of them disagree, and the release workflow publishes the archives, checksums and attestations.
+To release, set the new version in `skills/renfe/scripts/renfe` (`VERSION`), `skills/renfe/SKILL.md` (`metadata.version` and the `go install` module) and both `plugin.json` files, then push a `vX.Y.Z` tag. `scripts/dist.sh` refuses to build if any of them disagree, and the release workflow publishes the archives, checksums and attestations. Then publish the skill to ClawHub; `clawhub` 0.23 needs an absolute path:
+
+```sh
+clawhub skill publish "$PWD/skills/renfe" --version X.Y.Z --source-repo mejiasd3v/renfe-cli \
+  --source-ref vX.Y.Z --source-commit "$(git rev-list -n1 vX.Y.Z)" --source-path skills/renfe
+```
 
 The code lives in `cmd/renfe`: `session.go` and `dwr.go` for the HTTP/DWR protocol, `trains.go` for parsing, `choose.go` for train and fare selection, `browser.go` and `checkout.go` for the browser-driven purchase, `ticket.go` for PDFs. Changes to the purchase flow should be verified against renfe.com, since unit tests cannot cover the live pages.
 
